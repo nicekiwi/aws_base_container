@@ -1,13 +1,24 @@
-FROM amazonlinux:2022
+FROM nicekiwi/aws_base:latest
 
-# Update cache
-RUN dnf update
+RUN dnf install -y php8.1-devel
 
-# Install PHP 8.1
-RUN dnf install -y php8.1
+# Download XDebug
+WORKDIR /root
+RUN curl -O https://xdebug.org/files/xdebug-3.1.6.tgz
+RUN tar -xvzf xdebug-3.1.6.tgz
 
-# Install PHP extensions pdo_pgsql exif pcntl bcmath gd
-RUN dnf install -y php8.1-pdo php8.1-mbstring php8.1-pgsql php8.1-intl php8.1-bcmath php8.1-gd php8.1-opcache php8.1-xml
+# Install XDebug
+WORKDIR /root/xdebug-3.1.6
+RUN phpize
+RUN ./configure
+RUN make
+RUN cp modules/xdebug.so /usr/lib64/php/modules
 
-# Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Enable XDebug
+RUN echo 'zend_extension=xdebug' > /etc/php.d/99-xdebug.ini
+
+# Cleanup
+WORKDIR /root
+RUN rm -rf /root/xdebug-3.1.6.tgz
+RUN rm -rf /root/xdebug-3.1.6
+WORKDIR /
